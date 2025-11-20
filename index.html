@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Decrypt file</title>
+<link rel="stylesheet" href="styles.css">
+<script src="age-0.2.5.js"></script>
+<script src="decrypt.js" defer></script>
+</head>
+<body>
+<main class="card">
+<h1>Decrypt file</h1>
+<p class="info">Files are decrypted using age directly in your browser. The server never sees your passphrase or the decrypted content.</p>
+
+<form id="decryptForm">
+  <label for="pass" class="label">Passphrase</label>
+  <input id="pass" type="password" placeholder="Enter passphrase" autocomplete="one-time-password">
+  <button type="submit" class="btn">Decrypt</button>
+</form>
+<div id="status" class="status" aria-live="polite"></div>
+
+</main>
+</body>
+</html>

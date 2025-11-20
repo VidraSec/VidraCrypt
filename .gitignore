@@ -1,0 +1,3 @@
+# ignore files in files directory except .gitkeep
+files/*
+!files/.gitkeep
