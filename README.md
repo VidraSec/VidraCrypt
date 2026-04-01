@@ -14,6 +14,14 @@ Encrypted files must use UUIDv4-style filenames. Place them in the `app/files/` 
 age -e -p -o $(uuidgen) <to-encrypt>.zip
 ```
 
+You can also copy a file into `app/files/` with the helper script:
+
+```bash
+./add-to-files.sh <input-file>
+```
+
+It will encrypt the input file with `age` (passphrase mode), generate a UUIDv4-style filename automatically, and print the URL fragment to use.
+
 #### Full Example
 
 **for testing purposes only:**
