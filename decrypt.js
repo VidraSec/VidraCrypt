@@ -9,8 +9,8 @@ const CODES = {
   UNKNOWN_ERROR: 4
 };
 
-// matches UUID v4 format: 8-4-4-4-12 hex chars
-const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+// strict UUID v4: xxxxxxxx-xxxx-4xxx-[89ab]xxx-xxxxxxxxxxxx
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
 
 function getEncryptedFilename() {
   const fragment = window.location.hash;
@@ -54,8 +54,8 @@ async function decryptFile() {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
 
-    // output name is hardcoded for now, because we don't want the server to know
-    const outName = "out.zip";
+    // derive a stable local filename without revealing cleartext to the server
+    const outName = `decrypted-${filename}.zip`;
     a.download = outName;
     a.click();
 
@@ -70,10 +70,24 @@ async function decryptFile() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("decryptForm");
+  const passEl = document.getElementById("pass");
+  const submitBtn = document.getElementById("decryptBtn");
   const statusEl = document.getElementById("status");
+  let inProgress = false;
+  const MIN_BUSY_MS = 300;
+
+  function setBusy(isBusy) {
+    passEl.disabled = isBusy;
+    submitBtn.disabled = isBusy;
+    form.setAttribute("aria-busy", isBusy ? "true" : "false");
+  }
 
   form.onsubmit = async (e) => {
     e.preventDefault(); // prevent page reload
+    if (inProgress) return;
+    inProgress = true;
+    const startedAt = Date.now();
+    setBusy(true);
 
     // show decryption started message
     statusEl.textContent = "Decryption started, please wait...";
@@ -82,7 +96,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // give the browser a chance to render the message
     await new Promise(requestAnimationFrame);
 
-    const result = await decryptFile();
+    let result;
+    try {
+      result = await decryptFile();
+    } finally {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_BUSY_MS) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_BUSY_MS - elapsed));
+      }
+      // avoid keeping passphrase around after each decrypt attempt
+      passEl.value = "";
+      inProgress = false;
+      setBusy(false);
+    }
 
     switch(result) {
       case CODES.NO_PASSWORD:

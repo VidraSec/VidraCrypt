@@ -15,10 +15,10 @@
 
 <form id="decryptForm">
   <label for="pass" class="label">Passphrase</label>
-  <input id="pass" type="password" placeholder="Enter passphrase" autocomplete="one-time-password">
-  <button type="submit" class="btn">Decrypt</button>
+  <input id="pass" type="password" placeholder="Enter passphrase" autocomplete="one-time-password" required aria-describedby="status" autocapitalize="off" spellcheck="false">
+  <button id="decryptBtn" type="submit" class="btn">Decrypt</button>
 </form>
-<div id="status" class="status" aria-live="polite"></div>
+<div id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></div>
 
 </main>
 </body>
