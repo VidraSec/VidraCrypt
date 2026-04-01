@@ -1,3 +1,4 @@
 # ignore files in files directory except .gitkeep
 files/*
 !files/.gitkeep
+!files/06861552-deb6-4f71-b962-17ff9a55f307

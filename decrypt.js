@@ -55,7 +55,7 @@ async function decryptFile() {
     a.href = URL.createObjectURL(blob);
 
     // output name is hardcoded for now, because we don't want the server to know
-    const outName = "report.zip";
+    const outName = "out.zip";
     a.download = outName;
     a.click();
 
