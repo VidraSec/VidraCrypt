@@ -1,0 +1,12 @@
+http://localhost:8080 {
+	root * app
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Cross-Origin-Resource-Policy same-site
+		Content-Security-Policy "default-src 'self'"
+	}
+	file_server
+}

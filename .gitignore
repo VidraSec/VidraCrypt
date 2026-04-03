@@ -2,3 +2,6 @@
 app/files/*
 !app/files/.gitkeep
 !app/files/06861552-deb6-4f71-b962-17ff9a55f307
+
+# ignore caddy binary
+caddy
