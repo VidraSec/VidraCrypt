@@ -1,4 +1,4 @@
-http://localhost:8080 {
+localhost {
 	root * app
 	header {
 		-Server
@@ -17,7 +17,7 @@ http://localhost:8080 {
 		Integrity-Policy "blocked-destinations=(script style)"
 		Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
 		NEL "{\"report_to\":\"default\",\"max_age\":31536000,\"include_subdomains\":true}"
-		Content-Security-Policy "default-src 'none'; base-uri 'none'; child-src 'none'; connect-src 'self'; font-src 'none'; form-action 'none'; frame-ancestors 'none'; img-src 'none'; manifest-src 'none'; media-src 'none'; object-src 'none'; require-trusted-types-for 'script'; script-src 'strict-dynamic' 'sha384-f4/FKfd7+2kZbT6B1WuwM3gqK8KZtP2+il4WJ8CoSxesW9EetMPR0m/D8vL0Wfc/' 'sha384-NlN4UH+Kp35XJrSkZds+d9xcLNm9+YFhEzUjXqxiXwDUp0M1bWm75SL4WdcRSpFj' https: http:; style-src 'self'; trusted-types 'none'; worker-src 'none'; upgrade-insecure-requests"
+		Content-Security-Policy "default-src 'none'; base-uri 'none'; child-src 'none'; connect-src 'self'; font-src 'none'; form-action 'none'; frame-ancestors 'none'; img-src 'none'; manifest-src 'none'; media-src 'none'; object-src 'none'; require-trusted-types-for 'script'; script-src 'strict-dynamic' 'sha384-f4/FKfd7+2kZbT6B1WuwM3gqK8KZtP2+il4WJ8CoSxesW9EetMPR0m/D8vL0Wfc/' 'sha384-NlN4UH+Kp35XJrSkZds+d9xcLNm9+YFhEzUjXqxiXwDUp0M1bWm75SL4WdcRSpFj' https:; style-src 'self'; trusted-types 'none'; worker-src 'none'; upgrade-insecure-requests"
 	}
 	file_server
 }
