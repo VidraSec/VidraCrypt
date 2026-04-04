@@ -2,11 +2,16 @@ http://localhost:8080 {
 	root * app
 	header {
 		-Server
+		-Vary
+		-Etag
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy no-referrer
 		Cross-Origin-Resource-Policy same-site
-		Content-Security-Policy "default-src 'self'"
+		Cache-Control no-store, no-cache
+		Clear-Site-Data "*"
+		X-Permitted-Cross-Domain-Policies none
+		Content-Security-Policy "default-src 'none'; base-uri 'none'; child-src 'none'; connect-src 'self'; font-src 'none'; form-action 'none'; frame-ancestors 'none'; img-src 'none'; manifest-src 'none'; media-src 'none'; object-src 'none'; require-trusted-types-for 'script'; script-src 'self'; style-src 'self'; trusted-types 'none'; worker-src 'none';"
 	}
 	file_server
 }
