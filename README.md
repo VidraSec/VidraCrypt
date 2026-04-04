@@ -54,7 +54,7 @@ Enter the passphrase in the page. The decrypted zip will download automatically.
 
 A GitHub Pages demo is available here:
 
-[https://vidrasec.github.io/VidraCrypt/app/#06861552-deb6-4f71-b962-17ff9a55f307](https://vidrasec.github.io/VidraCrypt/app/#06861552-deb6-4f71-b962-17ff9a55f307)
+<https://vidrasec.github.io/VidraCrypt/app/#06861552-deb6-4f71-b962-17ff9a55f307>
 
 Test password: `123`
 
