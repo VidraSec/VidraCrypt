@@ -1,0 +1,43 @@
+# Shared security headers — import from Caddyfile via: import security-headers.caddy
+# For nginx/Apache, mirror these as add_header / Header directives or generate from a YAML/JSON source.
+#
+# CSP uses a heredoc (<<CSP … CSP): optional whitespace/newlines between ;-separated directives are fine.
+# Closing marker is indented so Caddy strips matching leading indentation from each line (see Caddy docs).
+header {
+	-Server
+	-Vary
+	-Etag
+	X-Content-Type-Options nosniff
+	X-Frame-Options DENY
+	Referrer-Policy no-referrer
+	Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	Cross-Origin-Resource-Policy same-site
+	Cross-Origin-Opener-Policy same-origin
+	Cross-Origin-Embedder-Policy require-corp
+	Cache-Control "no-store, no-cache, max-age=0, must-revalidate, private"
+	Clear-Site-Data "*"
+	X-Permitted-Cross-Domain-Policies none
+	Integrity-Policy "blocked-destinations=(script style)"
+	Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+	NEL "{\"report_to\":\"default\",\"max_age\":31536000,\"include_subdomains\":true}"
+	Content-Security-Policy <<CSP
+		default-src 'none';
+		base-uri 'none';
+		child-src 'none';
+		connect-src 'self';
+		font-src 'none';
+		form-action 'none';
+		frame-ancestors 'none';
+		img-src 'none';
+		manifest-src 'none';
+		media-src 'none';
+		object-src 'none';
+		require-trusted-types-for 'script';
+		script-src 'strict-dynamic' 'sha384-f4/FKfd7+2kZbT6B1WuwM3gqK8KZtP2+il4WJ8CoSxesW9EetMPR0m/D8vL0Wfc/' 'sha384-NlN4UH+Kp35XJrSkZds+d9xcLNm9+YFhEzUjXqxiXwDUp0M1bWm75SL4WdcRSpFj' https:;
+		style-src 'self';
+		trusted-types 'none';
+		worker-src 'none';
+		upgrade-insecure-requests
+		CSP
+}
+
