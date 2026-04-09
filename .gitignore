@@ -5,3 +5,6 @@ app/files/*
 
 # ignore caddy binary
 caddy
+
+# ignore wrangler files
+.wrangler/
