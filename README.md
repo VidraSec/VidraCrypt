@@ -1,80 +1,58 @@
 # VidraCrypt
 
-Uses [age](https://github.com/FiloSottile/age) or actually the JavaScript implementation [typage](https://github.com/FiloSottile/typage) to decrypt files entirely on the client side.
+Browser-based file decryption using [age](https://github.com/FiloSottile/age) (via the JavaScript implementation [typage](https://github.com/FiloSottile/typage)).
 
-The server never sees the cleartext file or the passphrase.
+The server never sees the cleartext file or the passphrase — decryption happens entirely in the browser.
 
 ## Usage
 
-### Create encrypted files
+### Encrypt a file
 
-Encrypted files must use UUIDv4-style filenames. Place them in the `app/files/` subdirectory:
-
-```bash
-age -e -p -o $(uuidgen) <to-encrypt>.zip
-```
-
-You can also copy a file into `app/files/` with the helper script:
+Use `add-to-files.sh` to encrypt a file with `age` (passphrase mode):
 
 ```bash
 ./add-to-files.sh <input-file>
 ```
 
-It will encrypt the input file with `age` (passphrase mode), generate a UUIDv4-style filename automatically, and print the URL fragment to use.
+The script generates a UUIDv4 filename, encrypts the file, and prints the passphrase and URL fragment to use.
 
-#### Full Example
+Set `FILES_PUBLIC_BASE_URL` to your file host's base URL to get a ready-made `#get=<base64url>` fragment:
 
-**for testing purposes only:**
-
-* clear text should never touch the server
-* python http.server should not be used in production
-
-``` bash
-echo 123 > to-encrypt.txt
-zip to-encrypt.zip to-encrypt.txt
-age -e -p -o $(uuidgen) to-encrypt.zip
-# follow instruction to create a password
+```bash
+FILES_PUBLIC_BASE_URL=https://files.example.com ./add-to-files.sh my-archive.zip
 ```
 
-Now run a local web server in the root directory of this repository:
+`upsert-file-metadata.py` is called automatically to keep a local `file-metadata.json` index of encrypted files (original name, encrypted UUID, file URL).
 
-``` bash
-python -m http.server
+### Decrypt a file
+
+Open the app URL with a `#get=<base64url-encoded-file-url>` fragment:
+
+```
+https://your-host/app/#get=<base64url>
 ```
 
-Browse to the decrypt page with the file UUID in the URL fragment:
-
-``` plain
-http://localhost:8000/app/#01234567-89ab-cdef-0123-456789abcdef
-```
-
-Enter the passphrase in the page. The decrypted zip will download automatically.
+Enter the passphrase — the decrypted file downloads automatically.
 
 ## Live demo
 
-A GitHub Pages demo is available here:
-
-<https://vidrasec.github.io/VidraCrypt/app/#06861552-deb6-4f71-b962-17ff9a55f307>
+<https://vidrasec.github.io/VidraCrypt/app/#get=aHR0cHM6Ly92aWRyYXNlYy5naXRodWIuaW8vVmlkcmFDcnlwdC8wNjg2MTU1Mi1kZWI2LTRmNzEtYjk2Mi0xN2ZmOWE1NWYzMDc>
 
 Test password: `123`
 
+## Security headers
+
+`app/_headers` contains a strict set of security headers ready for [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/headers/) deployments. For other platforms, mirror the directives from that file as appropriate.
+
 ## Notes
 
-* Works entirely in the browser; the passphrase is never sent to the server.
-* Modern browsers only (Chrome, Firefox, Edge, Safari).
-* For production, serve over HTTPS.
-* Status messages are shown inline below the passphrase input.
+- Works entirely in the browser; the passphrase is never sent to the server.
+- Modern browsers only (Chrome, Firefox, Edge, Safari).
+- Serve over HTTPS in production.
 
-## Troubleshooting
+## Dependency integrity
 
-* **"No filename specified in URL fragment"**: open the page with a UUIDv4 hash, e.g. `/app/#06861552-deb6-4f71-b962-17ff9a55f307`
-* **"Invalid filename"**: the hash must be a strict UUIDv4 (`xxxxxxxx-xxxx-4xxx-[89ab]xxx-xxxxxxxxxxxx`)
-* **"Encrypted file could not be loaded"**: confirm the encrypted file exists in `app/files/` and that your web server is running from the repository root
-* **"The password is incorrect or file is corrupted"**: verify the passphrase and ensure the encrypted input file was produced by `age -e -p`
-
-## Dependency Integrity
-
-This project ships a vendored `app/age-0.3.0.js`. Before deploying, verify its checksum in your CI/CD or release process:
+This project ships a vendored `app/age-0.3.0.js`. Verify its checksum before deploying:
 
 ```bash
 sha256sum app/age-0.3.0.js

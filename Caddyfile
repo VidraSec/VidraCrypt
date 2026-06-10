@@ -1,5 +1,0 @@
-localhost {
-	root * app
-	import security-headers.caddy
-	file_server
-}

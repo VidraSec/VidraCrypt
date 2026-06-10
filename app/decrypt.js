@@ -1,38 +1,82 @@
 const CODES = {
   SUCCESS: 0,
   NO_PASSWORD: 1,
-  MISSING_FILENAME: 5,
-  BAD_FILENAME: 6,
+  MISSING_GET_PARAM: 5,
+  BAD_GET_PARAM: 6,
   WRONG_PASSWORD: 2,
   FETCH_ERROR: 3,
   FETCH_NOT_OK: 7,
   UNKNOWN_ERROR: 4
 };
 
-// strict UUID v4: xxxxxxxx-xxxx-4xxx-[89ab]xxx-xxxxxxxxxxxx
-const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
-
-function getEncryptedFilename() {
+function getHashParams() {
   const fragment = window.location.hash;
   if (!fragment || fragment.length < 2) return null;
-  return fragment.slice(1);
+  return new URLSearchParams(fragment.slice(1));
 }
 
-function isUuidFilename(name) {
-  return UUID_RE.test(name);
+function decodeBase64Utf8(input) {
+  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+const FILE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function getFileIdFromPath(pathname) {
+  const pathMatch = pathname.match(/^\/[^/]+\/([^/]+)$/);
+  if (!pathMatch) return null;
+  const fileId = pathMatch[1];
+  if (!FILE_ID_RE.test(fileId)) return null;
+  return fileId;
+}
+
+async function isAllowedEncryptedFileUrl(parsedUrl) {
+  if (parsedUrl.protocol !== "https:") return false;
+  if (parsedUrl.username || parsedUrl.password) return false;
+  if (parsedUrl.port) return false;
+  if (!parsedUrl.hostname) return false;
+
+  const fileId = getFileIdFromPath(parsedUrl.pathname);
+  if (!fileId) return false;
+
+  return true;
+}
+
+async function getEncryptedFileUrlFromHash() {
+  const hashParams = getHashParams();
+  if (!hashParams) return { ok: false, code: CODES.MISSING_GET_PARAM };
+
+  const encodedGet = hashParams.get("get");
+  if (!encodedGet) return { ok: false, code: CODES.MISSING_GET_PARAM };
+
+  try {
+    const decodedUrl = decodeBase64Utf8(encodedGet);
+    const parsed = new URL(decodedUrl);
+    if (!(await isAllowedEncryptedFileUrl(parsed))) {
+      return { ok: false, code: CODES.BAD_GET_PARAM };
+    }
+    return { ok: true, url: parsed.toString() };
+  } catch (e) {
+    return { ok: false, code: CODES.BAD_GET_PARAM };
+  }
 }
 
 async function decryptFile() {
   const pass = document.getElementById("pass").value;
   if (!pass) return CODES.NO_PASSWORD;
 
-  const filename = getEncryptedFilename();
-  if (!filename) return CODES.MISSING_FILENAME;
-  if (!isUuidFilename(filename)) return CODES.BAD_FILENAME;
+  const fileUrlResult = await getEncryptedFileUrlFromHash();
+  if (!fileUrlResult.ok) return fileUrlResult.code;
 
   let ciphertext;
   try {
-    const res = await fetch("files/" + filename, { credentials: "omit" });
+    const res = await fetch(fileUrlResult.url, { credentials: "omit" });
     if (!res.ok) return CODES.FETCH_NOT_OK;
     ciphertext = new Uint8Array(await res.arrayBuffer());
   } catch (e) {
@@ -53,10 +97,7 @@ async function decryptFile() {
     const blob = new Blob([plaintext], { type: "application/zip" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-
-    // derive a stable local filename without revealing cleartext to the server
-    const outName = `decrypted-${filename}.zip`;
-    a.download = outName;
+    a.download = "decrypted-file.zip";
     a.click();
 
     // free memory
@@ -115,12 +156,12 @@ document.addEventListener("DOMContentLoaded", () => {
         statusEl.textContent = "Please enter a password";
         statusEl.className = "status error";
         break;
-      case CODES.MISSING_FILENAME:
-        statusEl.textContent = "No filename specified in URL fragment";
+      case CODES.MISSING_GET_PARAM:
+        statusEl.textContent = "Missing get parameter in URL fragment";
         statusEl.className = "status error";
         break;
-      case CODES.BAD_FILENAME:
-        statusEl.textContent = "Invalid filename. Expected UUIDv4-style name";
+      case CODES.BAD_GET_PARAM:
+        statusEl.textContent = "Invalid get parameter in URL fragment";
         statusEl.className = "status error";
         break;
       case CODES.FETCH_NOT_OK:
