@@ -11,15 +11,15 @@ The server never sees the cleartext file or the passphrase — decryption happen
 Use `add-to-files.sh` to encrypt a file with `age` (passphrase mode):
 
 ```bash
-./add-to-files.sh <input-file>
+./add-to-files.sh --target-dir <dir> <input-file>
 ```
 
-The script generates a UUIDv4 filename, encrypts the file, and prints the passphrase and URL fragment to use.
+The script always generates a UUIDv4 filename, encrypts the file, and prints the passphrase and URL fragment to use.
 
-Set `FILES_PUBLIC_BASE_URL` to your file host's base URL to get a ready-made `#get=<base64url>` fragment:
+Pass `--base-url` (or set `FILES_PUBLIC_BASE_URL`) to get a ready-made `#get=<base64url>` fragment:
 
 ```bash
-FILES_PUBLIC_BASE_URL=https://files.example.com ./add-to-files.sh my-archive.zip
+./add-to-files.sh --target-dir encrypted-files --base-url https://files.example.com/bucket my-archive.zip
 ```
 
 `upsert-file-metadata.py` is called automatically to keep a local `file-metadata.json` index of encrypted files (original name, encrypted UUID, file URL).
@@ -36,7 +36,7 @@ Enter the passphrase — the decrypted file downloads automatically.
 
 ## Live demo
 
-<https://vidrasec.github.io/VidraCrypt/app/#get=aHR0cHM6Ly92aWRyYXNlYy5naXRodWIuaW8vVmlkcmFDcnlwdC8wNjg2MTU1Mi1kZWI2LTRmNzEtYjk2Mi0xN2ZmOWE1NWYzMDc>
+<https://vidrasec.github.io/VidraCrypt/app/#get=aHR0cHM6Ly92aWRyYXNlYy5naXRodWIuaW8vVmlkcmFDcnlwdC9maWxlcy8wNjg2MTU1Mi1kZWI2LTRmNzEtYjk2Mi0xN2ZmOWE1NWYzMDc>
 
 Test password: `123`
 
