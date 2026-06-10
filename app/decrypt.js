@@ -29,7 +29,7 @@ function decodeBase64Utf8(input) {
 const FILE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function getFileIdFromPath(pathname) {
-  const pathMatch = pathname.match(/^\/[^/]+\/([^/]+)$/);
+  const pathMatch = pathname.match(/\/([^/]+)$/);
   if (!pathMatch) return null;
   const fileId = pathMatch[1];
   if (!FILE_ID_RE.test(fileId)) return null;
