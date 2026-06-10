@@ -46,16 +46,30 @@ confirm_passphrase() {
 usage() {
   cat <<EOF
 Usage:
-  $SCRIPT_NAME <input-file> [output-name]
+  $SCRIPT_NAME [options] <input-file> [output-name]
   $SCRIPT_NAME --help
 
+Options:
+  -t, --target-dir DIR    Directory to write encrypted files into (default: $TARGET_DIR).
+                          Create it first. Overrides TARGET_DIR env var.
+  -u, --base-url URL      Base URL of your file host. When set, prints a ready-made
+                          #get=<base64url(url)> fragment instead of #<filename>.
+                          Overrides FILES_PUBLIC_BASE_URL env var.
+  -m, --metadata-file FILE
+                          Path to the local metadata JSON index (default: $METADATA_FILE).
+                          Overrides METADATA_FILE env var.
+
 Description:
-  Encrypts <input-file> with age (passphrase mode) and writes it into $TARGET_DIR.
-  If [output-name] is omitted, a UUIDv4-style filename is generated.
+  Encrypts <input-file> with age (passphrase mode) and writes it into TARGET_DIR.
+  When output-name is omitted, a UUIDv4 filename is always generated.
+  Requires: age, diceware, openssl, uuidgen (or provide output-name explicitly).
+  Optional: python3 (for metadata tracking via upsert-file-metadata.py).
 
 Examples:
-  $SCRIPT_NAME ./my-archive.zip
-  $SCRIPT_NAME ./my-archive.zip 01234567-89ab-4def-8abc-0123456789ab
+  mkdir -p encrypted-files
+  $SCRIPT_NAME --target-dir encrypted-files ./my-archive.zip
+  $SCRIPT_NAME -t encrypted-files -u https://files.example.com/bucket ./my-archive.zip
+  $SCRIPT_NAME -t encrypted-files ./my-archive.zip 01234567-89ab-4def-8abc-0123456789ab
 EOF
 }
 
@@ -85,10 +99,27 @@ upsert_file_metadata() {
     "$crypt_url"
 }
 
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-  usage
-  exit 0
-fi
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -t|--target-dir)
+      [[ $# -gt 1 ]] || error "--target-dir requires an argument."
+      TARGET_DIR="$2"; shift 2 ;;
+    -u|--base-url)
+      [[ $# -gt 1 ]] || error "--base-url requires an argument."
+      FILES_PUBLIC_BASE_URL="$2"; shift 2 ;;
+    -m|--metadata-file)
+      [[ $# -gt 1 ]] || error "--metadata-file requires an argument."
+      METADATA_FILE="$2"; shift 2 ;;
+    -h|--help)
+      usage; exit 0 ;;
+    --)
+      shift; break ;;
+    -*)
+      error "Unknown option: $1" ;;
+    *)
+      break ;;
+  esac
+done
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
   usage
@@ -103,7 +134,7 @@ if [[ ! -f "$INPUT_FILE" ]]; then
 fi
 
 if [[ ! -d "$TARGET_DIR" ]]; then
-  error "Target directory '$TARGET_DIR' does not exist. Run from repo root."
+  error "Target directory '$TARGET_DIR' does not exist. Create it first, or set TARGET_DIR to an existing directory."
 fi
 
 if ! command -v age >/dev/null 2>&1; then
