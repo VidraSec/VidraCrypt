@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="${TARGET_DIR:-s3-files}"
 FILES_PUBLIC_BASE_URL="${FILES_PUBLIC_BASE_URL:-}"
 METADATA_FILE="${METADATA_FILE:-file-metadata.json}"
+ASSUME_YES=false
 
 generate_passphrase() {
   if ! command -v diceware >/dev/null 2>&1; then
@@ -58,12 +59,15 @@ Options:
   -m, --metadata-file FILE
                           Path to the local metadata JSON index (default: $METADATA_FILE).
                           Overrides METADATA_FILE env var.
+  -y, --yes               Non-interactive: use the generated passphrase without asking
+                          and pass it to age automatically (age-encrypt-passphrase.py)
+                          instead of typing it twice.
 
 Description:
   Encrypts <input-file> with age (passphrase mode) and writes it into TARGET_DIR.
   When output-name is omitted, a UUIDv4 filename is always generated.
   Requires: age, diceware, openssl, uuidgen (or provide output-name explicitly).
-  Optional: python3 (for metadata tracking via upsert-file-metadata.py).
+  Optional: python3 (for metadata tracking via upsert-file-metadata.py; required for --yes).
 
 Examples:
   mkdir -p encrypted-files
@@ -110,6 +114,8 @@ while [[ $# -gt 0 ]]; do
     -m|--metadata-file)
       [[ $# -gt 1 ]] || error "--metadata-file requires an argument."
       METADATA_FILE="$2"; shift 2 ;;
+    -y|--yes)
+      ASSUME_YES=true; shift ;;
     -h|--help)
       usage; exit 0 ;;
     --)
@@ -156,12 +162,21 @@ if [[ -e "$DEST_PATH" ]]; then
 fi
 
 echo "Encrypting '$INPUT_FILE' to '$DEST_PATH'..."
-PASSPHRASE="$(confirm_passphrase "$(generate_passphrase)")"
-# age -p reads from /dev/tty only (not stdin); there is no env-based passphrase in stock age.
-echo "age will prompt twice (input hidden). Paste or type the same passphrase both times." >&2
-echo "Do not submit an empty passphrase — age would autogenerate a different one than shown above." >&2
-echo "Passphrase to enter: $PASSPHRASE" >&2
-age -e -p -o "$DEST_PATH" "$INPUT_FILE"
+if [[ "$ASSUME_YES" == "true" ]]; then
+  command -v python3 >/dev/null 2>&1 || error "'python3' is required for --yes."
+  PASSPHRASE="$(generate_passphrase)"
+  [[ -n "$PASSPHRASE" ]] || error "Passphrase generation returned an empty passphrase."
+  # age -p reads from /dev/tty only; the helper answers its prompts via a pseudo-terminal.
+  AGE_PASSPHRASE="$PASSPHRASE" python3 "${SCRIPT_DIR}/age-encrypt-passphrase.py" "$DEST_PATH" "$INPUT_FILE" \
+    || error "Encryption failed."
+else
+  PASSPHRASE="$(confirm_passphrase "$(generate_passphrase)")"
+  # age -p reads from /dev/tty only (not stdin); there is no env-based passphrase in stock age.
+  echo "age will prompt twice (input hidden). Paste or type the same passphrase both times." >&2
+  echo "Do not submit an empty passphrase — age would autogenerate a different one than shown above." >&2
+  echo "Passphrase to enter: $PASSPHRASE" >&2
+  age -e -p -o "$DEST_PATH" "$INPUT_FILE"
+fi
 
 echo "Encrypted '$INPUT_FILE' -> '$DEST_PATH'"
 echo "Passphrase: $PASSPHRASE"
